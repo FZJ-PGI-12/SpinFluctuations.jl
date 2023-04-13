@@ -37,20 +37,17 @@ function fluctuation_matrix(problem::Problem, S::Matrix{<:Real}, solutions::Vect
     L
 end
 
-
 """
-    evolve_fluctuations(problem::Problem, τ::Real, β::Vector{<:Real}, γ::Vector{<:Real})
+    evolve_fluctuations_full(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
 
 ### Input
 - `problem::Problem`: A `Problem` instance defining the optimization problem.
-- `τ::Real`: The time-step of the considered annealing schedule.
-- `β::Vector{<:Real}`: The corresponding vector of QAOA driver parameters.
-- `γ::Vector{<:Real}`: The corresponding vector of QAOA problem parameters.    
+-
 
 ### Output
 - The Lyapunov exponents characterizing the dynamics of the Gaussian fluctuations.
 """
-function evolve_fluctuations(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
+function evolve_fluctuations_full(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
     num_qubits = problem.num_qubits    
     
     # evolution
@@ -61,7 +58,7 @@ function evolve_fluctuations(problem::Problem, T_final::Real; rtol=1e-4, atol=1e
     solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
     solutions = solution(sol(T_final)) 
     
-    lyapunov_exponent = [zeros(2num_qubits) for _ in 1:size(sol.t[2:end])[1]]
+    lyapunov_exponents = [zeros(2num_qubits) for _ in 1:size(sol.t[2:end])[1]]
     M = 1.0I(2num_qubits)
     
     Δts = map(x -> x[2] - x[1], zip(sol.t[1:end-1], sol.t[2:end]))
@@ -77,8 +74,52 @@ function evolve_fluctuations(problem::Problem, T_final::Real; rtol=1e-4, atol=1e
         lyapunov_exponent_eig = log.((1.0 + 0.0im) * lyapunov_exponential_eig) ./ 2 .|> real
         lyapunov_exponent_eig = sort(lyapunov_exponent_eig)
 
-        lyapunov_exponent[k] = lyapunov_exponent_eig        
+        lyapunov_exponents[k] = lyapunov_exponent_eig        
     end
 
-    lyapunov_exponent
+    lyapunov_exponents
+end
+
+
+"""
+    evolve_fluctuations(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
+
+### Input
+- `problem::Problem`: A `Problem` instance defining the optimization problem.
+-
+
+### Output
+- The Lyapunov exponents characterizing the dynamics of the Gaussian fluctuations.
+"""
+function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
+    
+    # evolution
+    schedule(t) = t / T_final
+    sol = evolve(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    max_lyapunov_exponent = [0. for _ in 1:size(sol.t[2:end])[1]]
+    M = 1.0I(2problem.num_qubits)
+    
+    Δts = map(x -> x[2] - x[1], zip(sol.t[1:end-1], sol.t[2:end]))
+    
+    for (k, t) in enumerate(sol.t[2:end])
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
+        
+        # could one truncate this SVD style?
+        omega_eig, omega_eigvec = eigen(L)
+        
+        M = omega_eigvec * diagm(exp.(-1im .* Δts[k] .* omega_eig)) * inv(omega_eigvec) * M
+
+        # use Arpack to get largest eigenvalue only
+        exp_lambda, _ = eigs(M * transpose(conj.(M)), nev=1, which=:LM, maxiter=512)
+        
+        lambda = log.((1.0 + 0.0im) * exp_lambda) ./ 2 .|> real
+        max_lyapunov_exponent[k] = lambda[1]        
+    end
+
+    max_lyapunov_exponent
 end
