@@ -24,3 +24,10 @@ function hamiltonian(β, γ, local_fields, couplings)
     H += β .* sum([operator(num_qubits, i, σ_x) for i in 1:num_qubits])
     H
 end
+
+function exact_gap(s::Real, h::Vector{<:Real}, J::Matrix{<:Real})
+    λ, _ = eigs(hamiltonian(1 - s, s, h, J), nev=4, which=:LM, maxiter=300) .|> real
+    E_0 = minimum(λ)
+    filter!(x -> x ≠ E_0, λ)
+    minimum(λ) - E_0
+end
