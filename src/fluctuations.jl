@@ -121,5 +121,5 @@ function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, a
         max_lyapunov_exponent[k] = lambda[1]        
     end
 
-    solutions, max_lyapunov_exponent
+    max_lyapunov_exponent
 end
