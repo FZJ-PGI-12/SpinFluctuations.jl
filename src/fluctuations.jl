@@ -99,6 +99,7 @@ function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, a
     
     # solution (rounded S_z values)
     solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    # solution = S -> [S[3, i] for i in 1:size(S)[2]]
     solutions = solution(sol(T_final)) 
     
     max_lyapunov_exponent = [0. for _ in 1:size(sol.t[2:end])[1]]
@@ -121,5 +122,5 @@ function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, a
         max_lyapunov_exponent[k] = lambda[1]        
     end
 
-    max_lyapunov_exponent
+    solutions, max_lyapunov_exponent
 end
