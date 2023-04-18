@@ -16,7 +16,7 @@ function energies_and_probs(final_probs, annealing_problem)
     h = annealing_problem.local_fields
     J = annealing_problem.couplings
     
-    bitstrings = [string(i, base=2, pad=L) for i in 0:(2^L - 1)]
+    bitstrings = [string(i, base=2, pad=L) |> reverse for i in 0:(2^L - 1)]
     bitvals = [parse.(Int, [bitstring[j] for j in 1:L]) for bitstring in bitstrings]
     spins = [1 .- 2s for s in bitvals]
     
@@ -51,7 +51,7 @@ function energy_from_max_prob(final_probs, annealing_problem)
 
     max_prob = maximum(final_probs)
     idxs = findall(x -> x == maximum(final_probs), final_probs)
-    bitstrings = string.(idxs .- 1, base=2, pad=L)
+    bitstrings = string.(idxs .- 1, base=2, pad=L) .|> reverse 
     bitvals = [parse.(Int, [bitstring[j] for j in 1:L]) for bitstring in bitstrings]
     spins = [1 .- 2s for s in bitvals]
 
