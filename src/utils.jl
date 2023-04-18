@@ -33,7 +33,7 @@ function energies_and_probs(final_probs, annealing_problem)
         push!(energy_to_bistring[val], key)
     end
     
-    energy_to_probs = Dict{Int, Float64}()
+    energy_to_probs = Dict{Float64, Float64}()
     for (key, vals) in energy_to_bistring
         energy_to_probs[key] = sum([bistring_to_probs[val] for val in vals])
     end
