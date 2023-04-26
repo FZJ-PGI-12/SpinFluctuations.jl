@@ -26,8 +26,17 @@ function hamiltonian(β, γ, local_fields, couplings)
 end
 
 function exact_gap(s::Real, h::Vector{<:Real}, J::Matrix{<:Real})
-    λ, _ = eigs(hamiltonian(1 - s, s, h, J), nev=4, which=:LM, maxiter=300) .|> real
+    λ, _ = eigs(-hamiltonian(1 - s, s, h, J), nev=4, which=:LM, maxiter=1000) .|> real
     E_0 = minimum(λ)
     filter!(x -> x ≠ E_0, λ)
     minimum(λ) - E_0
+end
+
+function exact_gap(s::Real, h::Vector{<:Real}, J::Matrix{<:Real}, v0)
+    λ, vs = eigs(-hamiltonian(1 - s, s, h, J), nev=4, which=:LM, maxiter=1000, v0=v0)
+    E_0 = minimum(λ)
+    idx = findfirst(x -> x == E_0, λ)
+    new_v0 = vs[:, idx]
+    filter!(x -> x ≠ E_0, λ)
+    minimum(λ) - E_0 |> real, new_v0
 end
