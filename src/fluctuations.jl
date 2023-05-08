@@ -77,7 +77,7 @@ function evolve_fluctuations_full(problem::Problem, T_final::Real; rtol=1e-4, at
         lyapunov_exponents[k] = lyapunov_exponent_eig        
     end
 
-    lyapunov_exponents
+    sol.t, solutions, lyapunov_exponents
 end
 
 
