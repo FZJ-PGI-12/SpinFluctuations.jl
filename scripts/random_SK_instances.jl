@@ -3,11 +3,12 @@ using QAOA, AdaptiveQuantumAnnealing
 using LinearAlgebra, Arpack, Random, Distributions, Printf, HDF5, PyPlot
 
 PATH = "/home/ubuntu/Archives/"
-N = 20
+# N = 20
+N = 8
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/", N)
 
-for seed in [53, 55, 133, 219, 226, 238, 239, 257, 286, 288, 307, 318, 391, 414, 444, 473]
+for seed in 1:100
     printstyled("seed = ", seed, "\n", color=:green) 
     Random.seed!(seed)
     J = rand(Distributions.Normal(0, 1), N, N) ./ sqrt(N) 
@@ -18,7 +19,6 @@ for seed in [53, 55, 133, 219, 226, 238, 239, 257, 286, 288, 307, 318, 391, 414,
     mf_problem = Problem(0, J_mat)
 
     # do mean-field computations
-
     h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), "J", J_mat)
 
     T_final = 30000.
