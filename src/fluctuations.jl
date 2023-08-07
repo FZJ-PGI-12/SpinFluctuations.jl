@@ -81,16 +81,41 @@ function evolve_fluctuations_full(problem::Problem, T_final::Real; rtol=1e-4, at
 end
 
 
-"""
-    evolve_fluctuations(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
+function maximal_lyapunov_exponent(problem::Problem, lyapunov_parameters::LyapunovParameters)
+    @unpack_LyapunovParameters lyapunov_parameters
+    
+    # evolution
+    schedule(t) = t / T_final
+    sol = evolve(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # coarse times for the Lyapunov exponent
+    # (sufficient to capture the relevant low frequencies)
+    times = range(0, T_final, npts + 1)
+    Δt = times[2] - times[1]    
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    max_lyapunov_exponent = [0. for _ in 1:size(times[2:end])[1]]
+    M = 1.0I(2problem.num_qubits)
+    
+    Δts = map(x -> x[2] - x[1], zip(sol.t[1:end-1], sol.t[2:end]))
+    
+    for (k, t) in enumerate(times[2:end])        
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
+        M = exp(-1im .* Δt .* L) * M
 
-### Input
-- `problem::Problem`: A `Problem` instance defining the optimization problem.
--
+        # use Arpack to get largest eigenvalue only
+        exp_lambda, _ = eigs(M * transpose(conj.(M)), nev=1, which=:LM, maxiter=512)
+        
+        lambda = log.((1.0 + 0.0im) * exp_lambda) ./ 2 .|> real
+        max_lyapunov_exponent[k] = lambda[1]        
+    end
 
-### Output
-- The Lyapunov exponents characterizing the dynamics of the Gaussian fluctuations.
-"""
+    sol.t, solutions, max_lyapunov_exponent
+end
+
 function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
     
     # evolution
