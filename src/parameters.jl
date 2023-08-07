@@ -1,15 +1,21 @@
+@with_kw struct LyapunovParameters
+    # final time for mean-field
+    T_final::Float64
+
+    # number of points to compute fluctuations for
+    npts::Int
+
+    # tolerances
+    rtol::Float64
+    atol::Float64
+end
+
 @with_kw struct MetricParameters
-    # padding
-    pad::Int
-
-    # coarse moving average
-    navg_coarse::Int
-
     # interpolation
     g_ninterp::Int
 
-    # fine moving average
-    navg_fine::Int
+    # moving average
+    g_navg::Int
 
     # metric amplitude
     C::Float64
@@ -28,11 +34,11 @@ end
     # boundary values
     u0::Vector{Float64}
 
-    # Christoffel moving average
-    navg::Int
-
-    # Christoffel interpolation
+    # interpolation
     Γ_ninterp::Int
+
+    # moving average
+    Γ_navg::Int
 
     # tolerances
     reltol::Float64
