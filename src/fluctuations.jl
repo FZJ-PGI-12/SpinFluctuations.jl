@@ -80,7 +80,7 @@ function evolve_fluctuations_full(problem::Problem, T_final::Real; rtol=1e-4, at
     sol.t, solutions, lyapunov_exponents
 end
 
-
+# current method!
 function maximal_lyapunov_exponent(problem::Problem, lyapunov_parameters::LyapunovParameters)
     @unpack_LyapunovParameters lyapunov_parameters
     
@@ -113,7 +113,7 @@ function maximal_lyapunov_exponent(problem::Problem, lyapunov_parameters::Lyapun
         max_lyapunov_exponent[k] = lambda[1]        
     end
 
-    sol.t, solutions, max_lyapunov_exponent
+    sol, max_lyapunov_exponent
 end
 
 function maximal_lyapunov_exponent(problem::Problem, T_final::Real; rtol=1e-4, atol=1e-6)
