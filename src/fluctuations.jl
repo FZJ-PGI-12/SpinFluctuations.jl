@@ -72,6 +72,39 @@ function statistical_green_function(problem::Problem, lyapunov_parameters::Lyapu
 end
 
 
+function statistical_green_function(problem::Problem, lyapunov_parameters::LyapunovParameters, schedule::Function)
+    @unpack_LyapunovParameters lyapunov_parameters
+    
+    # evolution
+    sol = evolve(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # coarse times for the transfer matrix
+    # (sufficient to capture the relevant low frequencies)
+    times = range(0, T_final, npts + 1)
+    Δt = times[2] - times[1]    
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    F_0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    F = [F_0 for _ in 1:npts+1]
+    M = 1.0I(2problem.num_qubits)
+    M_inv = 1.0I(2problem.num_qubits)
+    
+    for (k, t) in enumerate(times[2:end])        
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
+        M = exp(-1im .* Δt .* L) * M
+        M_inv = inv(M)
+
+        # evolve GF
+        F[k + 1] = M * F_0 * M_inv
+    end
+
+    sol, F
+end
+
+
 # current method!
 function maximal_lyapunov_exponent(problem::Problem, lyapunov_parameters::LyapunovParameters)
     @unpack_LyapunovParameters lyapunov_parameters
