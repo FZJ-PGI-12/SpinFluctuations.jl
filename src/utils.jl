@@ -1,6 +1,35 @@
-# function moving_average(vs, n)
-#     [sum(@view vs[i:(i + n-1)]) / n for i in 1:(length(vs) - (n-1))]
-# end
+function spectrum(ρ_T::Vector{ComplexF64}, lyapunov_parameters::LyapunovParameters)
+    @unpack_LyapunovParameters lyapunov_parameters
+    @assert size(ρ_T, 1) == npts+1
+
+    ωs = [(ω - 1 - npts/2)/T_final for ω in 1:npts+1]
+    fft_f = fftshift(fft(ρ_T))
+    spec = abs.(fft_f) ./ maximum(abs.(fft_f))
+    ωs, spec
+end
+
+function meshgrid(xin, yin)
+    # Get the number of elements in the input arrays
+    nx = length(xin)
+    ny = length(yin)
+    
+    # Initialize output arrays with zeros
+    xout = zeros(ny, nx)
+    yout = zeros(ny, nx)
+    
+    # Loop over columns (jx) and rows (ix)
+    for jx = 1:nx
+        for ix = 1:ny
+            # Assign values from input arrays to output arrays
+            xout[ix, jx] = xin[jx]
+            yout[ix, jx] = yin[ix]
+        end
+    end
+    
+    # Return a tuple of output arrays
+    return (x = xout, y = yout)
+end
+
 
 function moving_average(vs, n)
     res = similar(vs, length(vs) - (n-1))
