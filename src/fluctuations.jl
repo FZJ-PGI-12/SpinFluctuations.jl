@@ -37,6 +37,151 @@ function fluctuation_matrix(problem::Problem, S::Matrix{<:Real}, solutions::Vect
     L
 end
 
+function diagonal_spectral_functions(problem::Problem, lyapunov_parameters::LyapunovParameters)
+    @unpack_LyapunovParameters lyapunov_parameters
+    
+    # mean-field evolution
+    schedule(t) = t / T_final
+    sol = evolve(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # coarse times for the Green functions
+    # (sufficient to capture low frequencies)
+    times = range(0, T_final, npts + 1)
+    Δt = times[2] - times[1]    
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    g0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    g = [g0 for _ in 1:npts+1]
+
+    GL = [0.0 .* g0 for _ in 1:npts+1, _ in 1:npts+1]
+    GG = [0.0 .* g0 for _ in 1:npts+1, _ in 1:npts+1]   
+    
+    # set initial diagonals for lesser and greater
+    GL[1, 1] .= g[1] .- g0
+    GG[1, 1] .= g[1]     
+    
+    # evolve time diagonal
+    M = 1.0I(2problem.num_qubits)
+    M_inv = 1.0I(2problem.num_qubits)        
+    for k in 2:npts+1  
+        t = times[k] # times[k-1]
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
+        M = exp(-1im .* Δt .* L) * M
+        M_inv = M_inv * exp(1im .* Δt .* L)
+
+        # evolve GF
+        g[k] = M * g0 * M_inv
+        
+        # set diagonals for lesser and greater
+        GL[k, k] .= g[k] .- g0
+        GG[k, k] .= g[k]        
+    end
+    
+    # evolve lower triangle over two-time square
+    for m in 2:npts+1
+        t = times[m]
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))
+        ΔU = exp(-1im .* Δt .* L)
+
+        for k in 1:m-1  
+            # evolve GFs
+            GL[m, k] = ΔU * GL[m - 1, k]
+            GG[m, k] = ΔU * GG[m - 1, k]
+        end        
+    end    
+
+    # symmetry operation
+    for k in 1:npts+1
+        for l in k+1:npts+1
+            GL[k, l] = -GL[l, k]'
+            GG[k, l] = -GG[l, k]'
+        end
+    end    
+    
+    GL_diag = []
+    GG_diag = []
+    for idx in 1:problem.num_qubits
+        GL_idx = [GL[k, l][idx, idx] for k in 1:npts+1, l in 1:npts+1]
+        GG_idx = [GG[k, l][idx, idx] for k in 1:npts+1, l in 1:npts+1]
+        push!(GL_diag, GL_idx)
+        push!(GG_diag, GG_idx)
+    end
+
+    sol, GL_diag, GG_diag
+end
+
+
+
+function full_green_function(problem::Problem, lyapunov_parameters::LyapunovParameters)
+    @unpack_LyapunovParameters lyapunov_parameters
+    
+    # mean-field evolution
+    schedule(t) = t / T_final
+    sol = evolve(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # coarse times for the Green functions
+    # (sufficient to capture low frequencies)
+    times = range(0, T_final, npts + 1)
+    Δt = times[2] - times[1]    
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    g0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    g = [g0 for _ in 1:npts+1]
+
+    GL = [0.0 .* g0 for _ in 1:npts+1, _ in 1:npts+1]
+    GG = [0.0 .* g0 for _ in 1:npts+1, _ in 1:npts+1]   
+    
+    # set initial diagonals for lesser and greater
+    GL[1, 1] .= g[1] .- g0
+    GG[1, 1] .= g[1]     
+    
+    # evolve time diagonal
+    M = 1.0I(2problem.num_qubits)
+    M_inv = 1.0I(2problem.num_qubits)        
+    for k in 2:npts+1  
+        t = times[k] # times[k-1]
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
+        M = exp(-1im .* Δt .* L) * M
+        M_inv = M_inv * exp(1im .* Δt .* L)
+
+        # evolve GF
+        g[k] = M * g0 * M_inv
+        
+        # set diagonals for lesser and greater
+        GL[k, k] .= g[k] .- g0
+        GG[k, k] .= g[k]        
+    end
+    
+    # evolve lower triangle over two-time square
+    for m in 2:npts+1
+        t = times[m]
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))
+        ΔU = exp(-1im .* Δt .* L)
+
+        for k in 1:m-1  
+            # evolve GFs
+            GL[m, k] = ΔU * GL[m - 1, k]
+            GG[m, k] = ΔU * GG[m - 1, k]
+        end        
+    end    
+
+    # symmetry operation
+    for k in 1:npts+1
+        for l in k+1:npts+1
+            GL[k, l] = -GL[l, k]'
+            GG[k, l] = -GG[l, k]'
+        end
+    end    
+  
+    sol, g, GL, GG
+end
+
 
 function statistical_green_function(problem::Problem, lyapunov_parameters::LyapunovParameters)
     @unpack_LyapunovParameters lyapunov_parameters
@@ -62,7 +207,8 @@ function statistical_green_function(problem::Problem, lyapunov_parameters::Lyapu
     for (k, t) in enumerate(times[2:end])        
         L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
         M = exp(-1im .* Δt .* L) * M
-        M_inv = inv(M)
+        M_inv = M_inv * exp(1im .* Δt .* L)        
+        # M_inv = inv(M)
 
         # evolve GF
         F[k + 1] = M * F_0 * M_inv
