@@ -6,7 +6,18 @@ using PyPlot
 # PyPlot.plt.style.use("./paper.mplstyle")
 
 PATH = "/home/ubuntu/Archives/"
-N = 9
+
+# nev=64
+N = 15
+
+# nev=64
+# N = 13
+
+# nev=50
+# N = 11 
+
+# nev=32
+# N = 9
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/", N)
 
@@ -24,7 +35,7 @@ tol = 1e-8
 
 # minigap cutoff conditions for saving
 lower_cutoff = (minigap, data) -> (minigap < 0.01 && findfirst(x -> x == minigap, data) < length(data) - 2)
-upper_cutoff = minigap -> minigap > 0.68
+upper_cutoff = minigap -> minigap > 0.5 # 0.75
 
 # command-line argument
 loop_var = parse(Int, ARGS[1])
@@ -44,7 +55,7 @@ for seed in loop_var:loop_var+1999
 
     # get spectrum
     exact_times = range(0, 1, 33)
-    eigeninfo = map(s -> (eigs(-AdaptiveQuantumAnnealing.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=32, which=:LM, maxiter=10000)), exact_times)
+    eigeninfo = map(s -> (eigs(-AdaptiveQuantumAnnealing.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=64, which=:LM, maxiter=10000)), exact_times)
     λ = [vals[1] for vals in eigeninfo]
     λ = sort(reduce(hcat, λ), dims=1)
     final_eigvecs = eigeninfo[end][2]
