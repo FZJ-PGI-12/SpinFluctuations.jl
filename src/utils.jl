@@ -10,6 +10,20 @@ function spectrum_vs_T(idx, spectral_sols)
     (all_ωs, all_specs)
 end    
 
+function spectral_sum(spectral_sol)
+    τ_final = spectral_sol.t[end]
+    npts = 2length(spectral_sol.t)
+    τ_range = range(0, τ_final, npts+1)
+    ωs = [(ω - 1 - npts/2)/τ_final for ω in 1:npts+1]
+
+    # extrapolate to uniform grid and perform FFT
+    sum_f = [map(τ -> spectral_sol(τ)[idx, idx], τ_range) for idx in 1:size(spectral_sol.u[1])[1]÷2]
+    fft_f = fftshift(fft(sum(sum_f)))
+    spec = abs.(fft_f) ./ maximum(abs.(fft_f))
+
+    ωs, spec
+end
+
 # spectrum for fixed diagonal T and spin index idx
 function spectrum(spectral_sol, idx)
     τ_final = spectral_sol.t[end]
