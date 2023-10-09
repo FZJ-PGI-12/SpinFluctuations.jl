@@ -7,8 +7,14 @@ using PyPlot
 
 PATH = "/home/ubuntu/Archives/"
 
+nev = 100
+N = 19
+
+# nev=80
+# N = 17
+
 # nev=64
-N = 15
+# N = 15
 
 # nev=64
 # N = 13
@@ -34,13 +40,13 @@ npts = 256
 tol = 1e-8 
 
 # minigap cutoff conditions for saving
-lower_cutoff = (minigap, data) -> (minigap < 0.01 && findfirst(x -> x == minigap, data) < length(data) - 2)
+lower_cutoff = (minigap, data) -> (minigap < 0.01 && findfirst(x -> x == minigap, data) < length(data))
 upper_cutoff = minigap -> minigap > 0.5 # 0.75
 
 # command-line argument
 loop_var = parse(Int, ARGS[1])
 
-for seed in loop_var:loop_var+1999
+for seed in loop_var:loop_var+49
     printstyled(Dates.format(now(), "HH:MM") * ": seed = ", seed, "\n", color=:blue) 
 
     # create coupling matrix
@@ -55,7 +61,7 @@ for seed in loop_var:loop_var+1999
 
     # get spectrum
     exact_times = range(0, 1, 33)
-    eigeninfo = map(s -> (eigs(-AdaptiveQuantumAnnealing.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=64, which=:LM, maxiter=10000)), exact_times)
+    eigeninfo = map(s -> (eigs(-AdaptiveQuantumAnnealing.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=nev, which=:LM, maxiter=10000)), exact_times)
     λ = [vals[1] for vals in eigeninfo]
     λ = sort(reduce(hcat, λ), dims=1)
     final_eigvecs = eigeninfo[end][2]
