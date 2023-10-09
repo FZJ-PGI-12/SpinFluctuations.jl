@@ -1,5 +1,5 @@
 # script to generate 'hard' random SK instances
-using QAOA, AdaptiveQuantumAnnealing
+using QAOA, SpinFluctuations
 using LinearAlgebra, Arpack, Random, Distributions, Printf, HDF5
 using Dates
 using PyPlot
@@ -61,7 +61,7 @@ for seed in loop_var:loop_var+49
 
     # get spectrum
     exact_times = range(0, 1, 33)
-    eigeninfo = map(s -> (eigs(-AdaptiveQuantumAnnealing.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=nev, which=:LM, maxiter=10000)), exact_times)
+    eigeninfo = map(s -> (eigs(-SpinFluctuations.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=nev, which=:LM, maxiter=10000)), exact_times)
     λ = [vals[1] for vals in eigeninfo]
     λ = sort(reduce(hcat, λ), dims=1)
     final_eigvecs = eigeninfo[end][2]
