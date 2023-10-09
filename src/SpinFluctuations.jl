@@ -1,6 +1,6 @@
 module SpinFluctuations
 
-using QAOA, DifferentialEquations
+using QAOA, Yao, DifferentialEquations
 using FFTW, Interpolations, LinearAlgebra, Arpack, SparseArrays
 using Parameters
 
