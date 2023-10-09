@@ -5,7 +5,7 @@ using FFTW, Interpolations, LinearAlgebra, Arpack, SparseArrays
 using Parameters
 
 include("parameters.jl")
-export LyapunovParameters, MetricParameters, AdaptiveScheduleParameters
+export LyapunovParameters
 
 include("mean_field.jl")
 export evolve_mean_field
@@ -17,6 +17,7 @@ include("sparse_hamiltonian.jl")
 export hamiltonian, exact_gap
 
 include("utils.jl")
-export spectral_sum, spectrum_vs_T, spectrum, meshgrid, moving_average, energies_and_probs, energy_from_max_prob, energies_and_bitstrings
+# export spectral_sum, spectrum_vs_T, spectrum, meshgrid, moving_average, energies_and_probs, energy_from_max_prob, energies_and_bitstrings
+export spectral_sum, spectrum_vs_T, spectrum, meshgrid
 
 end
