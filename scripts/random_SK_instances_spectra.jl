@@ -20,7 +20,7 @@ instance_names = readdir(folder_name)
 
 loop_var = parse(Int, ARGS[1])
 
-for instance_name in instance_names[loop_var:loop_var+29]
+for instance_name in instance_names[loop_var:loop_var+99]
     printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, "\n", color=:blue)
     seed = match(pattern, instance_name)[1]    
 
@@ -38,25 +38,25 @@ for instance_name in instance_names[loop_var:loop_var+29]
     T_final = 32000.
     tol = 1e-8
 
-    # # Bogoliubov spectrum
-    # bogo_spec = bogoliubov_spectrum(mf_problem, LyapunovParameters(T_final, 32, tol, tol))
-    # bogo_spec = reduce(hcat, bogo_spec)
-    # bogo_spec = sort(bogo_spec .|> real, dims=1)
+    # Bogoliubov spectrum
+    bogo_spec = bogoliubov_spectrum(mf_problem, LyapunovParameters(T_final, 32, tol, tol))
+    bogo_spec = reduce(hcat, bogo_spec)
+    bogo_spec = sort(bogo_spec .|> real, dims=1)
 
-    # h5write(folder_name * instance_name, "bogoliubov_spectrum", bogo_spec)
-    # printstyled("\t", Dates.format(now(), "HH:MM") * ": Bogoliubov spectrum done.", "\n", color=:green)
+    h5write(folder_name * instance_name, "bogoliubov_spectrum", bogo_spec)
+    printstyled("\t", Dates.format(now(), "HH:MM") * ": Bogoliubov spectrum done.", "\n", color=:green)
 
-    # # statistical Green function
-    # npts = 2048
-    # coarse_times = range(0, 1, npts + 1)
-    # lyapunov_parameters = LyapunovParameters(T_final, npts, tol, tol)
-    # mf_sol, stat_GF = statistical_green_function(mf_problem, lyapunov_parameters)
+    # statistical Green function
+    npts = 2048
+    coarse_times = range(0, 1, npts + 1)
+    lyapunov_parameters = LyapunovParameters(T_final, npts, tol, tol)
+    mf_sol, stat_GF = statistical_green_function(mf_problem, lyapunov_parameters)
 
-    # flucs = k -> (real.(1.0im .* diag(stat_GF[k])[1:mf_problem.num_qubits]) .- 1.0) ./ 2;
-    # all_flucs = reduce(hcat, map(flucs, 1:npts+1))
+    flucs = k -> (real.(1.0im .* diag(stat_GF[k])[1:mf_problem.num_qubits]) .- 1.0) ./ 2;
+    all_flucs = reduce(hcat, map(flucs, 1:npts+1))
 
-    # h5write(folder_name * instance_name, "fluctuations", all_flucs)
-    # printstyled("\t", Dates.format(now(), "HH:MM") * ": Fluctuations done.", "\n", color=:green)
+    h5write(folder_name * instance_name, "fluctuations", all_flucs)
+    printstyled("\t", Dates.format(now(), "HH:MM") * ": Fluctuations done.", "\n", color=:green)
 
     # spectra
     # npts_diag = 20
