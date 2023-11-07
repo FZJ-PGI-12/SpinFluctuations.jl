@@ -98,7 +98,7 @@ function evolve_spectral_function(problem::Problem, T_final::Real, τ_final::Rea
         spectral_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
         push!(spectral_sols, spectral_sol)
     end    
-    spectral_sols
+    solutions, spectral_sols
 end
 
 # the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
