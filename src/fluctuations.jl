@@ -61,6 +61,47 @@ function bogoliubov_spectrum(problem::Problem, lyapunov_parameters::LyapunovPara
     bogol_spec
 end
 
+# less memory-intensive version of the spectral evolution
+# the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
+function evolve_spectral_sum(problem::Problem, T_final::Real, τ_final::Real, T_range; rtol=1e-4, atol=1e-6)
+    # if s is smaller than zero, return zero
+    # else, if s is bigger than one, return one
+    # otherwise return s
+    padded_schedule(s) = s < 0. ? 0. : (s > 1. ? 1. : s)
+    
+    # evolve beyond T_final to get all necessary values for τ-dynamics
+    sol = evolve_mean_field(problem.local_fields, problem.couplings, T_final + τ_final/2, t -> padded_schedule(t / T_final), rtol=rtol, atol=atol)
+    
+    # for negative t, return initial values (there is no evolution anyway)
+    # otherwise, return solution
+    padded_sol(t) = t < 0. ? sol(0.) : sol(t)
+    
+    # get mean-field solution
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    # spectral equation of motion
+    function spectral_eom(dρ, ρ, T, τ)
+        x_p = padded_schedule((T + τ / 2) / T_final)
+        x_m = padded_schedule((T - τ / 2) / T_final)
+
+        L_p = fluctuation_matrix(problem, padded_sol(T + τ / 2), solutions, 1 - x_p, x_p)
+        L_m = fluctuation_matrix(problem, padded_sol(T - τ / 2), solutions, 1 - x_m, x_m)
+
+        dρ .= -0.5im .* (L_p * ρ + ρ * L_m)
+    end    
+    
+    # solve with DifferentialEquations.jl for npts_diag points on the forward-time diagonal
+    spectral_sums = []
+    ρ0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    for T_diag in T_range
+        prob = ODEProblem(spectral_eom, ρ0, (0.0, τ_final), T_diag)
+        spectral_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
+        push!(spectral_sums, spectral_sum(spectral_sol))
+    end    
+    solutions, spectral_sums
+end
+
 # the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
 function evolve_spectral_function(problem::Problem, T_final::Real, τ_final::Real, T_range; rtol=1e-4, atol=1e-6)
     # if s is smaller than zero, return zero
