@@ -5,8 +5,8 @@ using PyPlot
 
 PATH = "/home/ubuntu/Archives/"
 
-N = 19
-pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
+# N = 19
+# pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
 # N = 17
 # pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
@@ -20,19 +20,24 @@ pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
 
-# N = 9
-# pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
+N = 9
+pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
-# subdir = "small_gaps"
-subdir = "large_gaps"
+subdir = "small_gaps"
+# subdir = "large_gaps"
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
 
 loop_var = parse(Int, ARGS[1])
 
-for instance_name in instance_names[loop_var:loop_var]
-    printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, "\n", color=:blue)
-    seed = match(pattern, instance_name)[1]    
+missing_seeds = ["13873", "21890", "29855", "29900"]
+
+for instance_name in instance_names#[loop_var:loop_var]
+    seed = match(pattern, instance_name)[1]
+    if seed ∉ missing_seeds
+        continue
+    end
+    printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, "\n", color=:blue)    
 
     λ = h5read(folder_name * instance_name, "exact_ARPACK_LM_eigvals")
 

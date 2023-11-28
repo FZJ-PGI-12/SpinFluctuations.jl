@@ -61,6 +61,78 @@ function bogoliubov_spectrum(problem::Problem, lyapunov_parameters::LyapunovPara
     bogol_spec
 end
 
+
+function evolve_statistical_function(problem::Problem, lyapunov_parameters::LyapunovParameters)
+    @unpack_LyapunovParameters lyapunov_parameters
+    
+    # evolution
+    schedule(t) = t / T_final
+    sol = evolve_mean_field(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
+    
+    # solution (rounded S_z values)
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    # statistical equation of motion
+    function statistical_eom(dF, F, p, t)
+        L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))
+        # L = fluctuation_matrix(problem, sol(T_final * t), solutions, 1 - schedule(T_final * t), schedule(T_final * t))
+        dF .= -1.0im .* (L * F - F * L)
+    end    
+    
+    # solve with DifferentialEquations.jl on the forward-time diagonal
+    statistical_sols = []
+    F0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    prob = ODEProblem(statistical_eom, F0, (0.0, T_final))
+    # prob = ODEProblem(statistical_eom, F0, (0.0, 1.0))
+    statistical_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
+    push!(statistical_sols, statistical_sol)
+
+    statistical_sols
+end
+
+
+# less memory-intensive version of the spectral evolution
+# the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
+function evolve_spectral_sum(problem::Problem, T_final::Real, τ_final::Real, T_range; rtol=1e-4, atol=1e-6)
+    # if s is smaller than zero, return zero
+    # else, if s is bigger than one, return one
+    # otherwise return s
+    padded_schedule(s) = s < 0. ? 0. : (s > 1. ? 1. : s)
+    
+    # evolve beyond T_final to get all necessary values for τ-dynamics
+    sol = evolve_mean_field(problem.local_fields, problem.couplings, T_final + τ_final/2, t -> padded_schedule(t / T_final), rtol=rtol, atol=atol)
+    
+    # for negative t, return initial values (there is no evolution anyway)
+    # otherwise, return solution
+    padded_sol(t) = t < 0. ? sol(0.) : sol(t)
+    
+    # get mean-field solution
+    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
+    solutions = solution(sol(T_final)) 
+    
+    # spectral equation of motion
+    function spectral_eom(dρ, ρ, T, τ)
+        x_p = padded_schedule((T + τ / 2) / T_final)
+        x_m = padded_schedule((T - τ / 2) / T_final)
+
+        L_p = fluctuation_matrix(problem, padded_sol(T + τ / 2), solutions, 1 - x_p, x_p)
+        L_m = fluctuation_matrix(problem, padded_sol(T - τ / 2), solutions, 1 - x_m, x_m)
+
+        dρ .= -0.5im .* (L_p * ρ + ρ * L_m)
+    end    
+    
+    # solve with DifferentialEquations.jl for npts_diag points on the forward-time diagonal
+    spectral_sums = []
+    ρ0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
+    for T_diag in T_range
+        prob = ODEProblem(spectral_eom, ρ0, (0.0, τ_final), T_diag)
+        spectral_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
+        push!(spectral_sums, spectral_sum(spectral_sol))
+    end    
+    solutions, spectral_sums
+end
+
 # the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
 function evolve_spectral_function(problem::Problem, T_final::Real, τ_final::Real, T_range; rtol=1e-4, atol=1e-6)
     # if s is smaller than zero, return zero
@@ -98,47 +170,7 @@ function evolve_spectral_function(problem::Problem, T_final::Real, τ_final::Rea
         spectral_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
         push!(spectral_sols, spectral_sol)
     end    
-    spectral_sols
-end
-
-# the mean-field solution needs to be "padded" because the τ-dynamics walks "outside" of the usual (t, t') square
-function evolve_spectral_function(problem::Problem, T_final::Real, τ_final::Real; npts_diag=32, rtol=1e-4, atol=1e-6)
-    # if s is smaller than zero, return zero
-    # else, if s is bigger than one, return one
-    # otherwise return s
-    padded_schedule(s) = s < 0. ? 0. : (s > 1. ? 1. : s)
-    
-    # evolve beyond T_final to get all necessary values for τ-dynamics
-    sol = evolve_mean_field(problem.local_fields, problem.couplings, T_final + τ_final/2, t -> padded_schedule(t / T_final), rtol=rtol, atol=atol)
-    
-    # for negative t, return initial values (there is no evolution anyway)
-    # otherwise, return solution
-    padded_sol(t) = t < 0. ? sol(0.) : sol(t)
-    
-    # get mean-field solution
-    solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
-    solutions = solution(sol(T_final)) 
-    
-    # spectral equation of motion
-    function spectral_eom(dρ, ρ, T, τ)
-        x_p = padded_schedule((T + τ / 2) / T_final)
-        x_m = padded_schedule((T - τ / 2) / T_final)
-
-        L_p = fluctuation_matrix(problem, padded_sol(T + τ / 2), solutions, 1 - x_p, x_p)
-        L_m = fluctuation_matrix(problem, padded_sol(T - τ / 2), solutions, 1 - x_m, x_m)
-
-        dρ .= -0.5im .* (L_p * ρ + ρ * L_m)
-    end    
-    
-    # solve with DifferentialEquations.jl for npts_diag points on the forward-time diagonal
-    spectral_sols = []
-    ρ0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
-    for T_diag in range(0, T_final, npts_diag+1)
-        prob = ODEProblem(spectral_eom, ρ0, (0.0, τ_final), T_diag)
-        spectral_sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
-        push!(spectral_sols, spectral_sol)
-    end    
-    spectral_sols
+    solutions, spectral_sols
 end
 
 
@@ -324,37 +356,19 @@ function statistical_green_function(problem::Problem, lyapunov_parameters::Lyapu
 end
 
 
-# function statistical_green_function(problem::Problem, lyapunov_parameters::LyapunovParameters, schedule::Function)
-#     @unpack_LyapunovParameters lyapunov_parameters
-    
-#     # evolution
-#     sol = evolve_mean_field(problem.local_fields, problem.couplings, T_final, schedule, rtol=rtol, atol=atol)  
-    
-#     # coarse times for the transfer matrix
-#     # (sufficient to capture the relevant low frequencies)
-#     times = range(0, T_final, npts + 1)
-#     Δt = times[2] - times[1]    
-    
-#     # solution (rounded S_z values)
-#     solution = S -> sign.([S[3, i] for i in 1:size(S)[2]])
-#     solutions = solution(sol(T_final)) 
-    
-#     F_0 = Diagonal(vcat(-1.0im .* ones(problem.num_qubits), 1.0im .* ones(problem.num_qubits))) |> Matrix
-#     F = [F_0 for _ in 1:npts+1]
-#     M = 1.0I(2problem.num_qubits)
-#     M_inv = 1.0I(2problem.num_qubits)
-    
-#     for (k, t) in enumerate(times[2:end])        
-#         L = fluctuation_matrix(problem, sol(t), solutions, 1 - schedule(t), schedule(t))   
-#         M = exp(-1im .* Δt .* L) * M
-#         M_inv = inv(M)
 
-#         # evolve GF
-#         F[k + 1] = M * F_0 * M_inv
-#     end
 
-#     sol, F
-# end
+
+
+
+
+
+
+
+
+
+
+
 
 
 # current method!

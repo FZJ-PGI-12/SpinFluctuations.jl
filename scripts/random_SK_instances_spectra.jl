@@ -1,78 +1,92 @@
-using QAOA, AdaptiveQuantumAnnealing
+using QAOA, SpinFluctuations
 using LinearAlgebra, Arpack, Random, Distributions, Printf, HDF5
-using Dates
+using Dates, Crayons
 using PyPlot
 
+loop_var = parse(Int, ARGS[1])
 PATH = "/home/ubuntu/Archives/"
+
+N = 19
+pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
+
+# N = 17
+# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
-N = 13
-pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
+
+# N = 13
+# pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
+
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
+
 # N = 9
 # pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 subdir = "small_gaps"
+# subdir = "large_gaps"
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
+filter!(x -> !occursin("results", x), instance_names)
 
-loop_var = parse(Int, ARGS[1])
+for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+99])
+    seed = match(pattern, instance_name)[1]
+    # printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:blue)
 
-for instance_name in instance_names[loop_var:loop_var+99]
-    printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, "\n", color=:blue)
-    seed = match(pattern, instance_name)[1]    
+# for (k, instance_name) in enumerate(instance_names)
+#     seed = match(pattern, instance_name)[1]
+#     if seed ∉ missing_seeds
+#         continue
+#     end
+#     printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:red)
 
     λ = h5read(folder_name * instance_name, "exact_ARPACK_LM_eigvals")
+    gap = λ[2, :] .- λ[1, :]
+    small_idxs = findall(x -> x < 0.1, gap) 
+    mingap = minimum(gap) 
 
-    gap = λ[2, :] .- λ[1, :];
     exact_times = range(0, 1, 33)
-    gaploc = exact_times[findfirst(x -> x == minimum(gap), gap)] 
-    printstyled("\t", Dates.format(now(), "HH:MM") * ": Gap is located around ", gaploc, "\n", color=:blue)
+    gaploc = exact_times[findfirst(x -> x == mingap, gap)] 
+    # printstyled("\t", Dates.format(now(), "HH:MM") * ": Gap is located around ", gaploc, "\n", color=:blue)
 
     couplings = h5read(folder_name * instance_name, "J")
     mf_problem = Problem(0, couplings)
 
-    T_final = 16000.
-    T_final = 32000.
-    tol = 1e-8
+    T_final = 32768.
+    tol = 1e-6
 
-    # Bogoliubov spectrum
-    bogo_spec = bogoliubov_spectrum(mf_problem, LyapunovParameters(T_final, 32, tol, tol))
-    bogo_spec = reduce(hcat, bogo_spec)
-    bogo_spec = sort(bogo_spec .|> real, dims=1)
+    # ======= Spectra =======
 
-    h5write(folder_name * instance_name, "bogoliubov_spectrum", bogo_spec)
-    printstyled("\t", Dates.format(now(), "HH:MM") * ": Bogoliubov spectrum done.", "\n", color=:green)
+    # write to results file
+    instance_name = "results_" * instance_name
 
-    # statistical Green function
-    npts = 2048
-    coarse_times = range(0, 1, npts + 1)
-    lyapunov_parameters = LyapunovParameters(T_final, npts, tol, tol)
-    mf_sol, stat_GF = statistical_green_function(mf_problem, lyapunov_parameters)
+    npts_diag = 16
+    T_diags = T_final .* range(0.5, 1.0, npts_diag + 1)
+    # T_diags = T_final .* [gaploc - 0.1, gaploc - 0.05, gaploc]
 
-    flucs = k -> (real.(1.0im .* diag(stat_GF[k])[1:mf_problem.num_qubits]) .- 1.0) ./ 2;
-    all_flucs = reduce(hcat, map(flucs, 1:npts+1))
+    # look at a few points leading up to the gap and one point after
+    # T_diags = T_final .* exact_times[small_idxs[1:findfirst(x -> x == gap_idx, small_idxs) + 1]]
 
-    h5write(folder_name * instance_name, "fluctuations", all_flucs)
-    printstyled("\t", Dates.format(now(), "HH:MM") * ": Fluctuations done.", "\n", color=:green)
+    # τ_final = 2048.
+    τ_final = 8192.
 
-    # spectra
-    # npts_diag = 20
-    # T_diags = T_final .* range(0.5, 1.0, npts_diag+1)
-    T_diags = T_final .* [gaploc - 0.1, gaploc - 0.05, gaploc]
-    # τ_final = 1000.
-    τ_final = 2000.
-    # τ_final = 4000.
-    spectral_sols = evolve_spectral_function(mf_problem, T_final, τ_final, T_diags)
-    for k in 1:length(T_diags)
-        printstyled("\t\t", Dates.format(now(), "HH:MM") * ": Getting spectrum at ", T_diags[k] / T_final, "\n", color=:blue)
-        ωs, spec_sum = spectral_sum(spectral_sols[k])
-        h5write(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.3f/omegas", T_final, τ_final, T_diags[k] / T_final), ωs)
-        h5write(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.3f/data", T_final, τ_final, T_diags[k] / T_final), spec_sum)
-    end    
-    printstyled("\t", Dates.format(now(), "HH:MM") * ": Spectra done.", "\n", color=:green)
+    try
+        h5read(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.5f/data", T_final, τ_final, T_diags[1] / T_final))
+        printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:light_green)
+    catch
+        printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:light_red)
+        printstyled("\t", Dates.format(now(), "HH:MM") * ": Getting spectral function...", "\n", color=:white)
+
+        mf_sol, spectral_sums = evolve_spectral_sum(mf_problem, T_final, τ_final, T_diags, rtol=1e-2*tol, atol=tol)
+        h5write(folder_name * instance_name, @sprintf("mean_field_sol_T_final_%.0f_tol_1e%.0f", T_final, log10(tol)), mf_sol)
+        
+        for k in 1:length(T_diags)
+            # printstyled("\t\t", Dates.format(now(), "HH:MM") * ": Getting spectrum at ", T_diags[k] / T_final, "\n", color=:blue)
+            ωs, spec_sum = spectral_fft(spectral_sums[k])
+            h5write(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.5f/omegas", T_final, τ_final, T_diags[k] / T_final), ωs)
+            h5write(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.5f/data", T_final, τ_final, T_diags[k] / T_final), spec_sum)
+        end
+        printstyled("\t", Dates.format(now(), "HH:MM") * ": Spectra done.", "\n", color=:green)
+    end   
 end
-
-
