@@ -11,7 +11,7 @@ include("mean_field.jl")
 export evolve_mean_field
 
 include("fluctuations.jl")
-export bogoliubov_spectrum, evolve_spectral_sum, evolve_spectral_function, statistical_green_function, maximal_lyapunov_exponent, full_green_function, diagonal_spectral_functions, evolve_fluctuations_full
+export bogoliubov_spectrum, evolve_spectral_sum, evolve_spectral_function, evolve_statistical_function, statistical_green_function#, maximal_lyapunov_exponent, full_green_function, diagonal_spectral_functions, evolve_fluctuations_full
 
 include("sparse_hamiltonian.jl")
 export hamiltonian, exact_gap
