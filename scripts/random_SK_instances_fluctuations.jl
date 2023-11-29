@@ -24,21 +24,21 @@ PATH = "/home/ubuntu/Archives/"
 N = 9
 pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
-# subdir = "small_gaps"
-subdir = "large_gaps"
+subdir = "small_gaps"
+# subdir = "large_gaps"
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
 filter!(x -> !occursin("results", x), instance_names)
 filter!(x -> !occursin("undecided", x), instance_names)
 
-# missing_seeds = ["9943"]
+missing_seeds = ["9943"]
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
-# for (k, instance_name) in enumerate(instance_names)
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
+for (k, instance_name) in enumerate(instance_names)
     seed = match(pattern, instance_name)[1]
-    # if seed ∉ missing_seeds
-    #     continue
-    # end
+    if seed ∉ missing_seeds
+        continue
+    end
     printstyled(Dates.format(now(), "HH:MM") * "|> ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:yellow)
 
     # λ = h5read(folder_name * instance_name, "exact_ARPACK_LM_eigvals")
@@ -53,7 +53,8 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
     # write to results file
     instance_name = "results_" * instance_name
 
-    T_final = 32768.
+    T_final = 32000.
+    # T_final = 32768.
     tol = 1e-8
 
     # Bogoliubov spectrum
@@ -66,7 +67,8 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
     printstyled("\t", Dates.format(now(), "HH:MM") * "|> Bogoliubov spectrum done.", "\n", color=:green)
 
     # statistical Green function
-    npts = 4096
+    npts = 2048
+    # npts = 4096
     coarse_times = range(0, 1, npts + 1)
     lyapunov_parameters = LyapunovParameters(T_final, npts, tol, tol)
     mf_sol, stat_GF = statistical_green_function(mf_problem, lyapunov_parameters)
