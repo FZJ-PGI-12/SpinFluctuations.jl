@@ -75,13 +75,13 @@ function meshgrid(xin, yin)
 end
 
 
-# function moving_average(vs, n)
-#     res = similar(vs, length(vs) - (n-1))
-#     @inbounds for i in 1:length(res)
-#         res[i] = sum(@view vs[i:(i + n-1)]) / n
-#     end
-#     return res
-# end
+function moving_average(vs, n)
+    res = similar(vs, length(vs) - (n-1))
+    @inbounds for i in 1:length(res)
+        res[i] = sum(@view vs[i:(i + n-1)]) / n
+    end
+    return res
+end
 
 
 # function energies_and_probs(final_probs, annealing_problem)
