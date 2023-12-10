@@ -79,7 +79,7 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+99])
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Getting spectral function...", "\n", color=:white)
 
         mf_sol, spectral_sums = evolve_spectral_sum(mf_problem, T_final, τ_final, T_diags, rtol=1e-2*tol, atol=tol)
-        h5write(folder_name * instance_name, @sprintf("mean_field_sol_T_final_%.0f_tol_1e%.0f", T_final, log10(tol)), mf_sol)
+        # h5write(folder_name * instance_name, @sprintf("mean_field_sol_T_final_%.0f_tol_1e%.0f", T_final, log10(tol)), mf_sol)
         
         for k in 1:length(T_diags)
             # printstyled("\t\t", Dates.format(now(), "HH:MM") * ": Getting spectrum at ", T_diags[k] / T_final, "\n", color=:blue)
