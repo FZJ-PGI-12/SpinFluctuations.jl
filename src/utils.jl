@@ -75,6 +75,13 @@ function meshgrid(xin, yin)
 end
 
 
+function smoothen(data, coarse_times; navg=64)
+    ninterp = size(coarse_times)[1] - 1
+    avg_data = linear_interpolation(range(0, 1, ninterp + 1)[1:end - navg + 1], moving_average(data, navg), extrapolation_bc=Line())
+    map(x -> avg_data(x - navg / 2ninterp), coarse_times)
+end
+
+
 function moving_average(vs, n)
     res = similar(vs, length(vs) - (n-1))
     @inbounds for i in 1:length(res)

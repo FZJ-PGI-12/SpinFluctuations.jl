@@ -17,6 +17,6 @@ include("sparse_hamiltonian.jl")
 export hamiltonian, exact_gap
 
 include("utils.jl")
-export spectral_fft, spectral_sum, spectrum_vs_T, spectrum, meshgrid, moving_average
+export spectral_fft, spectral_sum, spectrum_vs_T, spectrum, meshgrid, smoothen, moving_average
 
 end
