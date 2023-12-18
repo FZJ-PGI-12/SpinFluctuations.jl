@@ -16,3 +16,7 @@ function evolve_mean_field(h::Vector{<:Real}, J::Matrix{<:Real}, T_final::Float6
     sol = solve(prob, Tsit5(), reltol=rtol, abstol=atol)
     sol
 end
+
+function complex_coordinate(spin_idx::Int, nx_coarse::Matrix{Float64}, ny_coarse::Matrix{Float64}, nz_coarse::Matrix{Float64})
+    (nx_coarse[spin_idx, :] .+ 1.0im .*  ny_coarse[spin_idx, :]) ./ (1 .+ sign(nz_coarse[spin_idx, end]) .* nz_coarse[spin_idx, :])
+end

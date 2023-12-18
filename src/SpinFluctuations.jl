@@ -8,7 +8,7 @@ include("parameters.jl")
 export LyapunovParameters
 
 include("mean_field.jl")
-export magnetization, evolve_mean_field
+export magnetization, evolve_mean_field, complex_coordinate
 
 include("fluctuations.jl")
 export bogoliubov_spectrum, evolve_spectral_sum, evolve_spectral_function, evolve_statistical_function, statistical_green_function, maximal_lyapunov_exponent
