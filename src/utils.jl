@@ -38,7 +38,7 @@ end
 
 
 # =================================================================================================================================
-# mean-field helpers
+# mean-field and fluctuation helpers
 
 function n_vals(xyz::Int, sol_u)
     reduce(hcat, [sol_u[k, xyz, :] for k in 1:size(sol_u)[1]])
@@ -51,6 +51,11 @@ end
 
 function n_coarse(n_xyz, sol_t, coarse_times)
     reduce(hcat, [map(linear_interpolation(sol_t, n_xyz[spin_nr, :], extrapolation_bc=Line()), sol_t[end] .* coarse_times) for spin_nr in 1:size(n_xyz)[1]]) |> transpose |> Matrix
+end
+
+function shift_idx_to_center(idx, vec)
+    @assert size(vec)[1] % 2 == 1
+    reduce(vcat, [zeros(size(vec)[1] - idx), vec, zeros(idx - 1)])
 end
 
 
