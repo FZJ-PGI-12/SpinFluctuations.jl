@@ -37,81 +37,21 @@ function moving_average(vs, n)
 end
 
 
-# function energies_and_probs(final_probs, annealing_problem)
-#     L = annealing_problem.num_qubits
-#     h = annealing_problem.local_fields
-#     J = annealing_problem.couplings
-    
-#     bitstrings = [string(i, base=2, pad=L) |> reverse for i in 0:(2^L - 1)]
-#     bitvals = [parse.(Int, [bitstring[j] for j in 1:L]) for bitstring in bitstrings]
-#     spins = [1 .- 2s for s in bitvals]
-    
-#     bitstring_to_energy = Dict()
-#     bitstring_to_probs = Dict()
-#     for (i, spin) in enumerate(spins)
-#         E = sum([-h[l] * spin[l] for l in 1:L]) + sum([-J[i, j] * spin[i] * spin[j] for i in 1:L for j in (i+1):L])
-#         bitstring_to_energy[bitstrings[i]] = E
-#         bitstring_to_probs[bitstrings[i]] = final_probs[i]
-#     end
+# =================================================================================================================================
+# mean-field helpers
 
-#     energy_to_bistring = Dict((val, []) for (key, val) in bitstring_to_energy)
-#     for (key, val) in bitstring_to_energy
-#         push!(energy_to_bistring[val], key)
-#     end
-    
-#     energy_to_probs = Dict{Float64, Float64}()
-#     for (key, vals) in energy_to_bistring
-#         energy_to_probs[key] = sum([bitstring_to_probs[val] for val in vals])
-#     end
-    
-#     E = collect(keys(energy_to_probs)) |> sort
-#     probs = [energy_to_probs[en] for en in E]
-#     E = E .- minimum(E)
-#     return (E, probs)
-# end
+function n_vals(xyz::Int, sol_u)
+    reduce(hcat, [sol_u[k, xyz, :] for k in 1:size(sol_u)[1]])
+end
+
+function n_vals(xyz::String, sol_u)
+    component_dict = Dict("x" => 1, "y" => 2, "z" => 3)
+    reduce(hcat, [sol_u[k, component_dict[xyz], :] for k in 1:size(sol_u)[1]])
+end
+
+function n_coarse(n_xyz, sol_t, coarse_times)
+    reduce(hcat, [map(linear_interpolation(sol_t, n_xyz[spin_nr, :], extrapolation_bc=Line()), sol_t[end] .* coarse_times) for spin_nr in 1:size(n_xyz)[1]]) |> transpose |> Matrix
+end
 
 
-# function energy_from_max_prob(final_probs, annealing_problem)
-#     L = annealing_problem.num_qubits
-#     h = annealing_problem.local_fields
-#     J = annealing_problem.couplings
-
-#     max_prob = maximum(final_probs)
-#     idxs = findfirst(x -> x == max_prob, final_probs)
-#     bitstrings = [string.(idxs .- 1, base=2, pad=L) .|> reverse]
-#     bitvals = [parse.(Int, [bitstring[j] for j in 1:L]) for bitstring in bitstrings]
-#     spins = [1 .- 2s for s in bitvals]
-
-#     bistrings_to_energy = Dict()
-#     for (i, spin) in enumerate(spins)
-#         E = sum([-h[l] * spin[l] for l in 1:L]) + sum([-J[i, j] * spin[i] * spin[j] for i in 1:L for j in (i+1):L])
-#         bistrings_to_energy[bitstrings[i]] = E
-#     end
-    
-#     return max_prob, bistrings_to_energy
-# end
-
-
-# function energies_and_bitstrings(annealing_problem)
-#     L = annealing_problem.num_qubits
-#     h = annealing_problem.local_fields
-#     J = annealing_problem.couplings
-    
-#     bitstrings = [string(i, base=2, pad=L) |> reverse for i in 0:(2^L - 1)]
-#     bitvals = [parse.(Int, [bitstring[j] for j in 1:L]) for bitstring in bitstrings]
-#     spins = [1 .- 2s for s in bitvals]
-    
-#     bitstring_to_energy = Dict()
-#     bitstring_to_probs = Dict()
-#     for (i, spin) in enumerate(spins)
-#         E = sum([-h[l] * spin[l] for l in 1:L]) + sum([-J[i, j] * spin[i] * spin[j] for i in 1:L for j in (i+1):L])
-#         bitstring_to_energy[bitstrings[i]] = E
-#     end
-
-#     energy_to_bistring = Dict((val, []) for (key, val) in bitstring_to_energy)
-#     for (key, val) in bitstring_to_energy
-#         push!(energy_to_bistring[val], key)
-#     end
-    
-#     return (bitstring_to_energy, energy_to_bistring)
-# end
+# =================================================================================================================================

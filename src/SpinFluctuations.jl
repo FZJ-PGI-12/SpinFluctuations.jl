@@ -20,6 +20,6 @@ include("sparse_hamiltonian.jl")
 export hamiltonian, exact_gap
 
 include("utils.jl")
-export meshgrid, smoothen, moving_average
+export meshgrid, smoothen, moving_average, n_vals, n_coarse
 
 end
