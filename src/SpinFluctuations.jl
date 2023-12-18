@@ -13,10 +13,13 @@ export magnetization, evolve_mean_field
 include("fluctuations.jl")
 export bogoliubov_spectrum, evolve_spectral_sum, evolve_spectral_function, evolve_statistical_function, statistical_green_function, maximal_lyapunov_exponent
 
+include("spectrum.jl")
+export spectral_fft, spectral_sum, spectrum_vs_T, spectrum
+
 include("sparse_hamiltonian.jl")
 export hamiltonian, exact_gap
 
 include("utils.jl")
-export spectral_fft, spectral_sum, spectrum_vs_T, spectrum, meshgrid, smoothen, moving_average
+export meshgrid, smoothen, moving_average
 
 end
