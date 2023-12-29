@@ -58,5 +58,9 @@ function shift_idx_to_center(idx, vec)
     reduce(vcat, [zeros(size(vec)[1] - idx), vec, zeros(idx - 1)])
 end
 
+function regularize(x; ε=1e-1)
+    pv = x / (x^2 + ε^2)
+    abs(x) < ε^2 ? pv : 1/x
+end
 
 # =================================================================================================================================
