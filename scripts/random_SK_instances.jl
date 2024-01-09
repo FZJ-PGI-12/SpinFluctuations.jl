@@ -9,6 +9,7 @@ PATH = "/home/ubuntu/Archives/"
 
 nev = 100
 N = 19
+keep_EVs = 3
 
 # nev=80
 # N = 17
@@ -26,18 +27,6 @@ N = 19
 # N = 9
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/", N)
-
-# parameters for getting Lyapunov exponent
-#
-# final time for mean-field
-T_final = 10000.
-
-# number of points to get Lyapunov exponent for
-npts = 512
-npts = 256
-
-# tolerance for DifferentialEquations.jl when solving mean-field 
-tol = 1e-8 
 
 # minigap cutoff conditions for saving
 lower_cutoff = (minigap, data) -> (minigap < 0.01 && findfirst(x -> x == minigap, data) < length(data))
@@ -62,54 +51,25 @@ for seed in loop_var:loop_var+49
     # get spectrum
     exact_times = range(0, 1, 33)
     eigeninfo = map(s -> (eigs(-SpinFluctuations.hamiltonian(1 - s, s, mf_problem.local_fields, mf_problem.couplings), nev=nev, which=:LM, maxiter=10000)), exact_times)
-    λ = [vals[1] for vals in eigeninfo]
-    λ = sort(reduce(hcat, λ), dims=1)
-    final_eigvecs = eigeninfo[end][2]
+    λs = [vals[1] for vals in eigeninfo]
+    λ = sort(reduce(hcat, λs), dims=1)
 
+    all_eigvecs = zeros(length(exact_times), 2^(N-1), keep_EVs)
+    for k in 1:length(exact_times)
+        sorting_perm = sortperm(λs[k])
+        all_eigvecs[k, :, :] .= eigeninfo[k][2][:, sorting_perm[1:keep_EVs]]
+    end
+    
     minigap = minimum(λ[2, :] .- λ[1, :])
-
+    
     if lower_cutoff(minigap, λ[2, :] .- λ[1, :]) || upper_cutoff(minigap)
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Minigap is ", string(minigap), "\n", color=:green)
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Saving...", "\n", color=:green)
-
+        
         h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), "J", J_mat)
         h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), "exact_ARPACK_LM_eigvals", λ)
-        h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), "exact_ARPACK_LM_final_eigvecs", final_eigvecs)
-    
-        # get max. Lyapunov exponent
-        coarse_times = range(0, 1, npts + 1)
-        lyapunov_parameters = LyapunovParameters(T_final, npts, 1e-2*tol, tol)
-        
-        mf_sol, lyapunov_exponent = maximal_lyapunov_exponent(mf_problem, lyapunov_parameters)
-
-        h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), @sprintf("lyapunov_exponent_T_final_%.0f_tol_1e%.0f_npts_%i", T_final, log10(tol), npts), lyapunov_exponent)
-        printstyled("\t", Dates.format(now(), "HH:MM") * ": Lyapunov exponent done.", "\n", color=:green)
-
-        # ===========================================================================================================================
-        # Plotting
-
-        figure(figsize=(7, 3))
-        subplot(121)
-        plot(coarse_times[2:end], lyapunov_exponent, "-C0")
-        xlim(0, 1)
-        ylim(0, )
-        xlabel("\$s\$")
-        ylabel("Lyapunov Exponent")
-
-        subplot(122)
-        for i in 1:size(λ)[1]
-            plot(exact_times, λ[i, :] .- λ[1, :], "-k", ms=2)
-        end
-        xlim(0, 1)
-        ylim(0, 4)
-        xlabel("\$s\$")
-        ylabel("Exact Eigenvalues")
-
-        tight_layout()
-        savefig(PATH * @sprintf("plots/SK_model/N_%i/", N) * @sprintf("random_SK_instance_N_%i_seed_%i.pdf", N, seed))
-        close()
-
-        printstyled("\t", Dates.format(now(), "HH:MM") * ": Plot done.", "\n", color=:green)
+        h5write(folder_name * @sprintf("random_SK_instance_N_%i_seed_%i.h5", N, seed), "exact_ARPACK_LM_lowest_eigvecs", all_eigvecs)   
+        printstyled("\t", Dates.format(now(), "HH:MM") * ": Spectrum done.", "\n", color=:green) 
     else 
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Minigap is ", string(minigap), "\n", color=:red)
     end

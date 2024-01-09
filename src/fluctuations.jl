@@ -1,7 +1,3 @@
-function magnetization(S::Matrix{<:Real}, h::Vector{<:Real}, J::Matrix{<:Real})
-    h + [sum([J[i, j] * S[3, j] for j in 1:size(S)[2]]) for i in 1:size(S)[2]]
-end
-
 """
     fluctuation_matrix(problem::Problem, S::Vector{<:Vector{<:Real}}, solutions::Vector{<:Real}, β::Real, γ::Real)
 
