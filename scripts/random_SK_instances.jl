@@ -35,7 +35,7 @@ upper_cutoff = minigap -> minigap > 0.5 # 0.75
 # command-line argument
 loop_var = parse(Int, ARGS[1])
 
-for seed in loop_var:loop_var+49
+for seed in loop_var:loop_var+19
     printstyled(Dates.format(now(), "HH:MM") * ": seed = ", seed, "\n", color=:blue) 
 
     # create coupling matrix
@@ -62,7 +62,7 @@ for seed in loop_var:loop_var+49
     
     minigap = minimum(λ[2, :] .- λ[1, :])
     
-    if lower_cutoff(minigap, λ[2, :] .- λ[1, :]) || upper_cutoff(minigap)
+    if lower_cutoff(minigap, λ[2, :] .- λ[1, :]) # || upper_cutoff(minigap)
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Minigap is ", string(minigap), "\n", color=:green)
         printstyled("\t", Dates.format(now(), "HH:MM") * ": Saving...", "\n", color=:green)
         
