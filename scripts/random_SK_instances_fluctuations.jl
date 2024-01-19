@@ -6,11 +6,11 @@ using PyPlot
 loop_var = parse(Int, ARGS[1])
 PATH = "/home/ubuntu/Archives/"
 
-N = 19
-pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
+# N = 19
+# pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-# N = 17
-# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+N = 17
+pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"

@@ -9,8 +9,8 @@ PATH = "/home/ubuntu/Archives/"
 # N = 19
 # pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-# N = 17
-# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+N = 17
+pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
@@ -21,12 +21,12 @@ PATH = "/home/ubuntu/Archives/"
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
 
-N = 9
-pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
+# N = 9
+# pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 
 subdir = "small_gaps"
-missing_seeds = ["23583"]
+# missing_seeds = ["23583"]
 
 # subdir = "large_gaps"
 
@@ -37,16 +37,16 @@ filter!(x -> !occursin("undecided", x), instance_names)
 filter!(x -> !occursin("frustrated", x), instance_names)
 filter!(x -> !occursin("main_df", x), instance_names)
 
-# T_final = 32768.
-T_final = 2.0^18
+T_final = 32768.
+# T_final = 2.0^18
 tol = 1e-6
 
-# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
-for (k, instance_name) in enumerate(instance_names)
-    seed = match(pattern, instance_name)[1]
-    if seed ∉ missing_seeds
-        continue
-    end
+for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
+# for (k, instance_name) in enumerate(instance_names)
+#     seed = match(pattern, instance_name)[1]
+#     if seed ∉ missing_seeds
+#         continue
+#     end
     try
         h5read(folder_name * "results_" * instance_name, @sprintf("mean_field_sol_T_final_%.0f_tol_1e%.0f", T_final, log10(tol)))
     catch
