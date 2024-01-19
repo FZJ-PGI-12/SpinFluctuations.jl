@@ -9,14 +9,14 @@ PATH = "/home/ubuntu/Archives/"
 # N = 19
 # pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-N = 17
-pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+# N = 17
+# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
 
-# N = 13
-# pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
+N = 13
+pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
 
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
@@ -41,8 +41,8 @@ T_final = 32768.
 # T_final = 2.0^18
 tol = 1e-6
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+24])
-# for (k, instance_name) in enumerate(instance_names)
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+49])
+for (k, instance_name) in enumerate(instance_names)
 #     seed = match(pattern, instance_name)[1]
 #     if seed ∉ missing_seeds
 #         continue

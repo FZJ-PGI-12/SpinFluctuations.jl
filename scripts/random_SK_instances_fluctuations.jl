@@ -9,14 +9,14 @@ PATH = "/home/ubuntu/Archives/"
 # N = 19
 # pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-N = 17
-pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+# N = 17
+# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
 
-# N = 13
-# pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
+N = 13
+pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
 
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
@@ -25,10 +25,8 @@ pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 # pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 subdir = "small_gaps"
-# missing_seeds = string.([1302, 1315, 1336, 1359, 1400, 1402, 1430, 1456, 1478, 1493, 1498, 1509, 1515, 1521, 1523, 1542, 1557, 1603, 1621, 1624, 1633, 1656, 1659, 1666, 1683, 1688, 1690, 1691, 1695, 1726, 1750, 1760])
 
 # subdir = "large_gaps"
-# missing_seeds = string.([1367, 1369, 1379, 1416, 1447, 1552])
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
@@ -37,8 +35,8 @@ filter!(x -> !occursin("undecided", x), instance_names)
 filter!(x -> !occursin("frustrated", x), instance_names)
 filter!(x -> !occursin("main_df", x), instance_names)
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
-# for (k, instance_name) in enumerate(instance_names)
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+49])
+for (k, instance_name) in enumerate(instance_names)
     # seed = match(pattern, instance_name)[1]
     # if seed ∉ missing_seeds
     #     continue
