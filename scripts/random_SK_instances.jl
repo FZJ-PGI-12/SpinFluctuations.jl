@@ -10,21 +10,25 @@ PATH = "/home/ubuntu/Archives/"
 # N = 19
 # keep_EVs = 3
 
-nev=80
+nev = 80
 N = 17
 keep_EVs = 3
 
-# nev=64
+# nev = 70
 # N = 15
+# keep_EVs = 4
 
 # nev=64
 # N = 13
+# keep_EVs = 5
 
 # nev=50
 # N = 11 
+# keep_EVs = 5
 
 # nev=32
 # N = 9
+# keep_EVs = 5
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/", N)
 
