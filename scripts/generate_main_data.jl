@@ -61,7 +61,7 @@ all_eigenstates = Dict()
 
 for (k, instance_name) in enumerate(instance_names)
     seed = match(patterns_dict[N], instance_name)[1]    
-    print(k, ", ")
+    # print(k, ", ")
 
     # eigenvalues and -vectors
     λ = h5read(folder_name * instance_name, "exact_ARPACK_LM_eigvals")
@@ -81,6 +81,11 @@ for (k, instance_name) in enumerate(instance_names)
     
     # continue if mean-fields finds optimal solution
     if isapprox(E_star, λ[1, end], atol=1e-5)
+        continue
+    end
+
+    # continue if solution is (nearly) degenerate
+    if (λ[2, end] .- λ[1, end]) < 0.01
         continue
     end
         
@@ -128,6 +133,7 @@ print("\n")
 minigap_locs = Dict()
 all_overlaps = Dict()
 all_gaps = Dict()
+gs_fidelities = Dict()
 all_frustrated_flucs = Dict()
 all_inv_mags = Dict()
 seeds_to_max_fracs = Dict()
@@ -158,6 +164,7 @@ for seed in ordered_seeds
         
         all_overlaps[seed] = [abs.(overlap(n, H_z) .- overlap(n, H_x)) for n in 2:3]
         all_gaps[seed] = [1 ./ (λs[n] .- λs[1]) for n in 2:3]
+        gs_fidelities[seed] = [eigenstates[1][end]' * eigenstates[1][k] for k in 1:length(exact_times)]
         
         seeds_to_max_fracs[seed] = maximum(all_overlaps[seed][1] .* (all_gaps[seed][1]).^2)
     catch err
@@ -173,12 +180,12 @@ seeds_and_max_fracs = sort([(k, v) for (k, v) in seeds_to_max_fracs], by=x->x[2]
 
 main_df = DataFrame(seed=String[], minigap_locs=Float64[], 
                     eigvals=Vector[], eigstates=Vector[],
-                    scaled_most_frustrated_flucs=Vector[], overlaps=Vector[], gaps=Vector[], mean_scaled_flucs=Vector[], 
+                    scaled_most_frustrated_flucs=Vector[], overlaps=Vector[], gaps=Vector[], gs_fidelities=Vector[], mean_scaled_flucs=Vector[], 
                     mean_fields=Vector[], magnetizations=Matrix[])
 for (seed, _) in seeds_and_max_fracs
     push!(main_df, [seed, minigap_locs[seed], 
                     all_eigenvals[seed], all_eigenstates[seed],
-                    all_frustrated_flucs[seed], all_overlaps[seed], all_gaps[seed], mean_scaled_flucs[seed], 
+                    all_frustrated_flucs[seed], all_overlaps[seed], all_gaps[seed], gs_fidelities[seed], mean_scaled_flucs[seed], 
                     mean_fields[seed], all_magnetizations[seed]])
 end
 
