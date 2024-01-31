@@ -6,8 +6,8 @@ using PyPlot
 loop_var = parse(Int, ARGS[1])
 PATH = "/home/ubuntu/Archives/"
 
-N = 19
-pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
+# N = 19
+# pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
 # N = 17
 # pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
@@ -21,25 +21,31 @@ pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
 
-# N = 9
-# pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
+N = 9
+pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 subdir = "small_gaps"
 # subdir = "large_gaps"
+
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
 filter!(x -> !occursin("results", x), instance_names)
+filter!(x -> !occursin("undecided", x), instance_names)
+filter!(x -> !occursin("frustrated", x), instance_names)
+filter!(x -> !occursin("main_df", x), instance_names)
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+99])
-    seed = match(pattern, instance_name)[1]
-    # printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:blue)
+missing_seeds = ["131412"]
 
-# for (k, instance_name) in enumerate(instance_names)
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+99])
 #     seed = match(pattern, instance_name)[1]
-#     if seed ∉ missing_seeds
-#         continue
-#     end
-#     printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:red)
+#     # printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:blue)
+
+for (k, instance_name) in enumerate(instance_names)
+    seed = match(pattern, instance_name)[1]
+    if seed ∉ missing_seeds
+        continue
+    end
+    printstyled(Dates.format(now(), "HH:MM") * ": ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:red)
 
     λ = h5read(folder_name * instance_name, "exact_ARPACK_LM_eigvals")
     gap = λ[2, :] .- λ[1, :]
@@ -68,8 +74,8 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+99])
     # look at a few points leading up to the gap and one point after
     # T_diags = T_final .* exact_times[small_idxs[1:findfirst(x -> x == gap_idx, small_idxs) + 1]]
 
-    # τ_final = 2048.
-    τ_final = 8192.
+    τ_final = 2048.
+    # τ_final = 8192.
 
     try
         h5read(folder_name * instance_name, @sprintf("spectra_T_final_%i_tau_final_%i/T_%0.5f/data", T_final, τ_final, T_diags[1] / T_final))

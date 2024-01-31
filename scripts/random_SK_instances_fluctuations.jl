@@ -9,8 +9,8 @@ PATH = "/home/ubuntu/Archives/"
 # N = 19
 # pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-N = 17
-pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+# N = 17
+# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
@@ -21,11 +21,10 @@ pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 # N = 11 
 # pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
 
-# N = 9
-# pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
+N = 9
+pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 subdir = "small_gaps"
-
 # subdir = "large_gaps"
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
@@ -35,14 +34,25 @@ filter!(x -> !occursin("undecided", x), instance_names)
 filter!(x -> !occursin("frustrated", x), instance_names)
 filter!(x -> !occursin("main_df", x), instance_names)
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
-# for (k, instance_name) in enumerate(instance_names)
-    # seed = match(pattern, instance_name)[1]
-    # if seed ∉ missing_seeds
-    #     continue
-    # end
+missing_seeds = ["131412"]
+
+# T_final = 32000.
+T_final = 32768.
+# T_final = 65536.
+tol = 1e-8
+
+npts = 2048
+# npts = 4096
+# npts = 8192
+
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
+for (k, instance_name) in enumerate(instance_names)
+    seed = match(pattern, instance_name)[1]
+    if seed ∉ missing_seeds
+        continue
+    end
     try
-        h5read(folder_name * "results_" * instance_name, @sprintf("fluctuations_T_final_%.0f_tol_1e%.0f_npts_%i", 32000., log10(1e-8), 2048))
+        h5read(folder_name * "results_" * instance_name, @sprintf("fluctuations_T_final_%.0f_tol_1e%.0f_npts_%i", T_final, log10(tol), 2048))
         printstyled(Dates.format(now(), "HH:MM") * " |> ", instance_name, " exists\n", color=:green)
     catch
         printstyled(Dates.format(now(), "HH:MM") * " |> ", instance_name, @sprintf(" is loop number %i", k), "\n", color=:white)
@@ -52,11 +62,6 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
 
         # write to results file
         instance_name = "results_" * instance_name
-
-        T_final = 32000.
-        # T_final = 32768.
-        # T_final = 65536.
-        tol = 1e-8
 
         # Bogoliubov spectrum
         npts_bogo = 32
@@ -68,9 +73,6 @@ for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
         printstyled("\t", Dates.format(now(), "HH:MM") * "|> Bogoliubov spectrum done.", "\n", color=:green)
 
         # statistical Green function
-        npts = 2048
-        # npts = 4096
-        # npts = 8192
         coarse_times = range(0, 1, npts + 1)
         lyapunov_parameters = LyapunovParameters(T_final, npts, tol, tol)
         mf_sol, stat_GF = statistical_green_function(mf_problem, lyapunov_parameters)
