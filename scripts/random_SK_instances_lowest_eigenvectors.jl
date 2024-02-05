@@ -15,28 +15,30 @@ PATH = "/home/ubuntu/Archives/"
 # pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 # keep_EVs = 4
 
-nev = 64
-N = 15
-pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
-keep_EVs = 5
+# nev = 64
+# N = 15
+# pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
+# keep_EVs = 5
 
 # nev = 64
 # N = 13
 # pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
 # keep_EVs = 5
 
-# nev = 50
-# N = 11 
-# pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
-# keep_EVs = 5
+nev = 50
+N = 11 
+pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
+keep_EVs = 5
 
 # nev = 32
 # N = 9
 # pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 # keep_EVs = 5
 
-subdir = "small_gaps"
-# subdir = "large_gaps"
+# subdir = "small_gaps"
+subdir = "large_gaps"
+missing_seeds = ["100061"]
+
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
 filter!(x -> !occursin("results", x), instance_names)
@@ -49,6 +51,10 @@ loop_var = parse(Int, ARGS[1])
 
 # for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
 for (k, instance_name) in enumerate(instance_names)
+    seed = match(pattern, instance_name)[1]
+    if seed ∉ missing_seeds
+        continue
+    end    
     try
         h5read(folder_name * instance_name, "exact_ARPACK_LM_lowest_eigvecs")
     catch

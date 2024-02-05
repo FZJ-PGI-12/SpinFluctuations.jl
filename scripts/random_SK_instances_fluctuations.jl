@@ -18,11 +18,11 @@ PATH = "/home/ubuntu/Archives/"
 # N = 13
 # pattern = r"random_SK_instance_N_13_seed_(\d+)\.h5"
 
-# N = 11 
-# pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
+N = 11 
+pattern = r"random_SK_instance_N_11_seed_(\d+)\.h5"
 
-N = 9
-pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
+# N = 9
+# pattern = r"random_SK_instance_N_9_seed_(\d+)\.h5"
 
 subdir = "small_gaps"
 # subdir = "large_gaps"
@@ -34,7 +34,7 @@ filter!(x -> !occursin("undecided", x), instance_names)
 filter!(x -> !occursin("frustrated", x), instance_names)
 filter!(x -> !occursin("main_df", x), instance_names)
 
-missing_seeds = ["131412"]
+missing_seeds = ["2809"]
 
 # T_final = 32000.
 T_final = 32768.
