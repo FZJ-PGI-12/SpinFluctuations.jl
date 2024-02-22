@@ -6,11 +6,11 @@ using PyPlot
 loop_var = parse(Int, ARGS[1])
 PATH = "/home/ubuntu/Archives/"
 
-N = 19
-pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
+# N = 19
+# pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
-# N = 17
-# pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
+N = 17
+pattern = r"random_SK_instance_N_17_seed_(\d+)\.h5"
 
 # N = 15
 # pattern = r"random_SK_instance_N_15_seed_(\d+)\.h5"
@@ -26,10 +26,9 @@ pattern = r"random_SK_instance_N_19_seed_(\d+)\.h5"
 
 
 subdir = "small_gaps"
-# missing_seeds = string.([1302, 1315, 1336, 1359, 1400, 1402, 1430, 1456, 1478, 1493, 1498, 1509, 1515, 1521, 1523, 1542, 1557, 1603, 1621, 1624, 1633, 1656, 1659, 1666, 1683, 1688, 1690, 1691, 1695, 1726, 1750, 1760])
+# missing_seeds = ["23583"]
 
 # subdir = "large_gaps"
-# missing_seeds = string.([1367, 1369, 1379, 1416, 1447, 1552])
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/%s/", N, subdir)
 instance_names = readdir(folder_name)
@@ -39,14 +38,15 @@ filter!(x -> !occursin("frustrated", x), instance_names)
 filter!(x -> !occursin("main_df", x), instance_names)
 
 T_final = 32768.
+# T_final = 2.0^18
 tol = 1e-6
 
-for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
-# for (k, instance_name) in enumerate(instance_names)
-    # seed = match(pattern, instance_name)[1]
-    # if seed ∉ missing_seeds
-    #     continue
-    # end
+# for (k, instance_name) in enumerate(instance_names[loop_var:loop_var+9])
+for (k, instance_name) in enumerate(instance_names)
+#     seed = match(pattern, instance_name)[1]
+#     if seed ∉ missing_seeds
+#         continue
+#     end
     try
         h5read(folder_name * "results_" * instance_name, @sprintf("mean_field_sol_T_final_%.0f_tol_1e%.0f", T_final, log10(tol)))
     catch

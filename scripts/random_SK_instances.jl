@@ -3,28 +3,32 @@ using QAOA, SpinFluctuations
 using LinearAlgebra, Arpack, Random, Distributions, Printf, HDF5
 using Dates
 using PyPlot
-# PyPlot.plt.style.use("./paper.mplstyle")
 
 PATH = "/home/ubuntu/Archives/"
 
-nev = 100
-N = 19
+# nev = 100
+# N = 19
+# keep_EVs = 3
+
+nev = 80
+N = 17
 keep_EVs = 3
 
-# nev=80
-# N = 17
-
-# nev=64
+# nev = 70
 # N = 15
+# keep_EVs = 4
 
 # nev=64
 # N = 13
+# keep_EVs = 5
 
 # nev=50
 # N = 11 
+# keep_EVs = 5
 
 # nev=32
 # N = 9
+# keep_EVs = 5
 
 folder_name = PATH * @sprintf("data/SK_model/N_%i/", N)
 
@@ -35,7 +39,7 @@ upper_cutoff = minigap -> minigap > 0.5 # 0.75
 # command-line argument
 loop_var = parse(Int, ARGS[1])
 
-for seed in loop_var:loop_var+19
+for seed in loop_var:loop_var+99
     printstyled(Dates.format(now(), "HH:MM") * ": seed = ", seed, "\n", color=:blue) 
 
     # create coupling matrix
